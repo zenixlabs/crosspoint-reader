@@ -981,9 +981,7 @@ void BaseTheme::drawStatusBar(GfxRenderer& renderer, const float bookProgress, c
     if (availableTitleSpace <= 0) {
       title.clear();
     } else {
-      if (SETTINGS.statusBarAuthorToggle == 1) {
-        title = cleanUpTitle(title);
-      }
+      title = cleanUpTitle(title);
       titleWidth = renderer.getTextWidth(sbFontId, title.c_str());
       if (titleWidth > availableTitleSpace) {
         title = renderer.truncatedText(sbFontId, title.c_str(), availableTitleSpace);
