@@ -196,7 +196,7 @@ constexpr ThemeMetrics values = {.batteryWidth = 15,
                                  .progressBarHeight = 16,
                                  .progressBarMarginTop = 1,
                                  .statusBarHorizontalMargin = 5,
-                                 .statusBarVerticalMargin = 19,
+                                 .statusBarVerticalMargin = 30,
                                  .keyboardKeyHeight = 56,
                                  .keyboardKeySpacing = 0,
                                  .keyboardCenteredText = false,
@@ -306,4 +306,7 @@ class BaseTheme {
   static constexpr int batteryPercentSpacing = 4;
   static void drawBatteryOutline(const GfxRenderer& renderer, int x, int y, int battWidth, int rectHeight);
   static void drawBatteryLightningBolt(const GfxRenderer& renderer, int boltX, int boltY);
+
+ private:
+  bool statusBarAuthor = false;
 };

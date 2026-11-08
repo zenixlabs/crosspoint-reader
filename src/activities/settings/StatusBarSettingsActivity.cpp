@@ -24,9 +24,11 @@ enum MenuItem {
   ITEM_PROGRESS_BAR,
   ITEM_PROGRESS_BAR_THICKNESS,
   ITEM_TITLE,
+  ITEM_AUTHOR_ALT,
   ITEM_BATTERY,
   ITEM_XTC_STATUS_BAR,
   ITEM_CLOCK,  // RTC boards only
+  ITEM_SB_FONT_TYPE,
   ITEM_COUNT
 };
 
@@ -41,9 +43,11 @@ const StrId menuNames[FULL_MENU_ITEMS] = {
     StrId::STR_PROGRESS_BAR,
     StrId::STR_PROGRESS_BAR_THICKNESS,
     StrId::STR_TITLE,
+    StrId::STR_AUTHOR_TOGGLE,
     StrId::STR_BATTERY,
     StrId::STR_XTC_STATUS_BAR,
     StrId::STR_CLOCK,
+    StrId::STR_SB_FONT_TYPE,
 };
 
 constexpr int PROGRESS_BAR_ITEMS = 3;
@@ -61,6 +65,9 @@ const StrId xtcStatusBarNames[XTC_STATUS_BAR_ITEMS] = {StrId::STR_HIDE, StrId::S
 
 constexpr int STATUS_BAR_CLOCK_ITEMS = CrossPointSettings::STATUS_BAR_CLOCK_MODE_COUNT;
 const StrId statusBarClockNames[STATUS_BAR_CLOCK_ITEMS] = {StrId::STR_HIDE, StrId::STR_DIR_RIGHT, StrId::STR_DIR_LEFT};
+
+constexpr int SB_FONT_TYPE_ITEMS = 2;
+const StrId statusBarFontTypeNames[SB_FONT_TYPE_ITEMS] = {StrId::STR_SERIF, StrId::STR_SANS_SERIF};
 
 const int verticalPreviewTextPadding = 40;
 }  // namespace
@@ -94,6 +101,10 @@ void StatusBarSettingsActivity::onEnter() {
     SETTINGS.statusBarClock = CrossPointSettings::STATUS_BAR_CLOCK_MODE::STATUS_BAR_CLOCK_HIDE;
   }
 
+  if (SETTINGS.statusBarFontType >= SB_FONT_TYPE_ITEMS) {
+    SETTINGS.statusBarFontType = CrossPointSettings::SB_FONT_TYPE::SB_FONT_TYPE_SANS_SERIF;
+  }
+
   // Labels never change (unlike the values, which track live SETTINGS
   // state), so they're set once here rather than every buildScreen() call.
   for (int i = 0; i < visibleItemCount; i++) {
@@ -125,37 +136,29 @@ void StatusBarSettingsActivity::handleSelection() {
       SETTINGS.statusBarBookProgressPercentage = (SETTINGS.statusBarBookProgressPercentage + 1) % 2;
       break;
     case ITEM_PROGRESS_BAR:
-      optionPopup.show(StrId::STR_PROGRESS_BAR, progressBarNames, PROGRESS_BAR_ITEMS, SETTINGS.statusBarProgressBar,
-                       [this](int idx) {
-                         SETTINGS.statusBarProgressBar = idx;
-                         SETTINGS.saveToFile();
-                       });
-      return;
+      SETTINGS.statusBarProgressBar = (SETTINGS.statusBarProgressBar + 1) % PROGRESS_BAR_ITEMS;
+      break;
     case ITEM_PROGRESS_BAR_THICKNESS:
-      optionPopup.show(StrId::STR_PROGRESS_BAR_THICKNESS, progressBarThicknessNames, PROGRESS_BAR_THICKNESS_ITEMS,
-                       SETTINGS.statusBarProgressBarThickness, [this](int idx) {
-                         SETTINGS.statusBarProgressBarThickness = idx;
-                         SETTINGS.saveToFile();
-                       });
-      return;
+      SETTINGS.statusBarProgressBarThickness =
+          (SETTINGS.statusBarProgressBarThickness + 1) % PROGRESS_BAR_THICKNESS_ITEMS;
+      break;
     case ITEM_TITLE:
-      optionPopup.show(StrId::STR_TITLE, titleNames, TITLE_ITEMS, SETTINGS.statusBarTitle, [this](int idx) {
-        SETTINGS.statusBarTitle = idx;
-        SETTINGS.saveToFile();
-      });
-      return;
+      SETTINGS.statusBarTitle = (SETTINGS.statusBarTitle + 1) % TITLE_ITEMS;
+      break;
+    case ITEM_AUTHOR_ALT:
+      SETTINGS.statusBarAuthorToggle = (SETTINGS.statusBarAuthorToggle + 1) % 2;
+      break;
     case ITEM_BATTERY:
       SETTINGS.statusBarBattery = (SETTINGS.statusBarBattery + 1) % 2;
       break;
     case ITEM_XTC_STATUS_BAR:
-      optionPopup.show(StrId::STR_XTC_STATUS_BAR, xtcStatusBarNames, XTC_STATUS_BAR_ITEMS, SETTINGS.xtcStatusBarMode,
-                       [this](int idx) {
-                         SETTINGS.xtcStatusBarMode = idx;
-                         SETTINGS.saveToFile();
-                       });
-      return;
+      SETTINGS.xtcStatusBarMode = (SETTINGS.xtcStatusBarMode + 1) % XTC_STATUS_BAR_ITEMS;
+      break;
     case ITEM_CLOCK:
       SETTINGS.statusBarClock = (SETTINGS.statusBarClock + 1) % STATUS_BAR_CLOCK_ITEMS;
+      break;
+    case ITEM_SB_FONT_TYPE:
+      SETTINGS.statusBarFontType = (SETTINGS.statusBarFontType + 1) % SB_FONT_TYPE_ITEMS;
       break;
     default:
       return;
@@ -175,6 +178,8 @@ std::string StatusBarSettingsActivity::rowValueText(const int index) {
       return I18N.get(xtcStatusBarNames[SETTINGS.xtcStatusBarMode]);
     case ITEM_CLOCK:
       return I18N.get(statusBarClockNames[SETTINGS.statusBarClock]);
+    case ITEM_SB_FONT_TYPE:
+      return I18N.get(statusBarFontTypeNames[SETTINGS.statusBarFontType]);
     default:
       return "";
   }
@@ -204,6 +209,7 @@ void StatusBarSettingsActivity::buildScreen(UiScreen& screen) {
   GUI.setCheckboxRow(rowItems_[ITEM_CHAPTER_PAGE_COUNT], SETTINGS.statusBarChapterPageCount);
   GUI.setCheckboxRow(rowItems_[ITEM_BOOK_PROGRESS_PERCENTAGE], SETTINGS.statusBarBookProgressPercentage);
   GUI.setCheckboxRow(rowItems_[ITEM_BATTERY], SETTINGS.statusBarBattery);
+  GUI.setCheckboxRow(rowItems_[ITEM_AUTHOR_ALT], SETTINGS.statusBarAuthorToggle);
 
   fui::ListProps props;
   props.items = rowItems_;

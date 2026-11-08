@@ -14,6 +14,7 @@ class XtcReaderChapterSelectionActivity final : public UiListActivity {
   // lifetime of this screen) and reused by buildScreen() on every repaint
   // instead of rebuilding a ListItem vector per render.
   std::vector<freeink::ui::ListItem> rowItems;
+  std::vector<std::string> rowValues;
   void buildRowItems();
 
   int listCount() const override { return xtc ? static_cast<int>(xtc->getChapters().size()) : 0; }

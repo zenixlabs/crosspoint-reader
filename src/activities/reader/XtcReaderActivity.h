@@ -45,4 +45,7 @@ class XtcReaderActivity final : public ReaderActivity {
   void onReturnFromEndOfBook() override;
 
   ScreenshotInfo getScreenshotInfo() const override;
+
+ private:
+  bool showAuthoronThisPage = false;
 };

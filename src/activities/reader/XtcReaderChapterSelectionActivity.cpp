@@ -4,6 +4,7 @@
 #include <I18n.h>
 
 #include <algorithm>
+#include <cmath>
 #include <vector>
 
 #include "MappedInputManager.h"
@@ -49,10 +50,14 @@ void XtcReaderChapterSelectionActivity::onEnter() {
 void XtcReaderChapterSelectionActivity::buildRowItems() {
   const auto& chapters = xtc->getChapters();
   rowItems.clear();
+  rowValues.clear();
   rowItems.reserve(chapters.size());
+  rowValues.reserve(chapters.size());
   for (const auto& chapter : chapters) {
     fui::ListItem item;
     item.label = chapter.name.empty() ? tr(STR_UNNAMED) : chapter.name.c_str();
+    rowValues.push_back(std::to_string(chapter.startPage + 1));
+    item.value = rowValues.back().c_str();
     item.actionValue = static_cast<int16_t>(rowItems.size());
     rowItems.push_back(item);
   }
@@ -92,18 +97,47 @@ bool XtcReaderChapterSelectionActivity::handleButtons() {
 }
 
 void XtcReaderChapterSelectionActivity::buildScreen(UiScreen& screen) {
+  if (!xtc) {
+    return;
+  }
   const auto& metrics = UITheme::getInstance().getMetrics();
   const Rect safe = UITheme::getInstance().getScreenSafeArea(renderer, true, false);
+
   // Content: the safe area minus the header band drawChrome paints the title in.
   screen.setContentMarginFromScreen(fui::Insets{
       static_cast<int16_t>(safe.y + metrics.topPadding + metrics.headerHeight),
       static_cast<int16_t>(renderer.getScreenWidth() - (safe.x + safe.width)),
       static_cast<int16_t>(renderer.getScreenHeight() - (safe.y + safe.height)), static_cast<int16_t>(safe.x)});
+
+  // Progress summary where the old sub-header band sat.
+  std::string progressLine;
+  const int bookPageCount = static_cast<int>(xtc->getPageCount());
+  const int bookPage = static_cast<int>(currentPage) + 1;
+  const float bookPercent = bookPageCount > 0 ? (bookPage * 100.0f) / bookPageCount : 0.0f;
+  char percentStr[8];
+  snprintf(percentStr, sizeof(percentStr), "%.0f", bookPercent);
+
+  int chapterPage = bookPage, chapterTotal = bookPageCount;  // fallback: no chapters
+  if (xtc->hasChapters()) {
+    const auto& chapters = xtc->getChapters();
+    const auto it = std::find_if(chapters.begin(), chapters.end(), [this](const xtc::ChapterInfo& c) {
+      return currentPage >= c.startPage && currentPage <= c.endPage;
+    });
+    if (it != chapters.end() && it->endPage >= it->startPage) {
+      chapterPage = static_cast<int>(currentPage - it->startPage) + 1;
+      chapterTotal = static_cast<int>(it->endPage - it->startPage) + 1;
+    }
+  }
+  if (chapterTotal > 0) {
+    progressLine = std::string(tr(STR_CHAPTER_PREFIX)) + std::to_string(chapterPage) + "/" +
+                   std::to_string(chapterTotal) + std::string(tr(STR_PAGES_SEPARATOR));
+  }
+  progressLine += std::string(tr(STR_BOOK_PREFIX)) + percentStr + "%";
+  const fui::Rect band = screen.takeTop(static_cast<int16_t>(metrics.tabBarHeight));
+  const int16_t pad = screen.theme().headerSidePadding;
+  screen.target().text(band.inset(fui::Insets{0, pad, 0, pad}), progressLine.c_str(), screen.theme().smallText);
   screen.spacer(static_cast<int16_t>(metrics.verticalSpacing));
 
-  if (!xtc) {
-    return;
-  }
   if (rowItems.empty()) {
     screen.centeredText(tr(STR_NO_CHAPTERS), screen.theme().bodyText);
     return;
@@ -121,12 +155,8 @@ void XtcReaderChapterSelectionActivity::buildScreen(UiScreen& screen) {
 }
 
 void XtcReaderChapterSelectionActivity::drawChrome() {
+  std::string title = xtc->getTitle();
   const auto& metrics = UITheme::getInstance().getMetrics();
   const Rect safe = UITheme::getInstance().getScreenSafeArea(renderer, true, false);
-
-  // Centered title in the header band the content margin reserves.
-  const int titleWidth = renderer.getTextWidth(UI_12_FONT_ID, tr(STR_SELECT_CHAPTER), EpdFontFamily::BOLD);
-  const int titleX = safe.x + (safe.width - titleWidth) / 2;
-  const int titleY = safe.y + metrics.topPadding + (metrics.headerHeight - renderer.getLineHeight(UI_12_FONT_ID)) / 2;
-  renderer.drawText(UI_12_FONT_ID, titleX, titleY, tr(STR_SELECT_CHAPTER), true, EpdFontFamily::BOLD);
+  GUI.drawHeader(renderer, Rect{safe.x, safe.y + metrics.topPadding, safe.width, metrics.headerHeight}, title.c_str());
 }

@@ -996,6 +996,17 @@ void EpubReaderActivity::loop() {
 
   const unsigned long heldMs = (touch.prev || touch.next) ? touch.heldMs : mappedInput.getHeldTime();
   const bool longPress = !fromTilt && heldMs >= ReaderUtils::SKIP_HOLD_MS;
+  const bool fromSideButtons = mappedInput.isPressed(MappedInputManager::Button::Up) ||
+                               mappedInput.isPressed(MappedInputManager::Button::Down) ||
+                               mappedInput.wasReleased(MappedInputManager::Button::Up) ||
+                               mappedInput.wasReleased(MappedInputManager::Button::Down);
+
+  if (longPress && fromSideButtons && SETTINGS.sideButtonLayout == SETTINGS.NEXT_NEXT) {
+    pageTurn(false);
+    requestUpdate();
+    return;
+  }
+
   if (longPress && SETTINGS.longPressButtonBehavior == SETTINGS.CHAPTER_SKIP) {
     const bool succeeded = skipPages(nextTriggered ? 1 : -1);
     notePageTurn(false, succeeded);
@@ -1423,6 +1434,7 @@ void EpubReaderActivity::toggleAutoPageTurn(const uint8_t selectedPageTurnOption
 }
 
 bool EpubReaderActivity::pageTurn(bool isForwardTurn) {
+  showAuthoronThisPage = !showAuthoronThisPage;
   if (!section) return false;
   // A "Bluetooth failed" note has been read: the page this turn paints shows the title again.
   bleturner::acknowledgeLinkNote();
@@ -1467,6 +1479,7 @@ bool EpubReaderActivity::pageTurn(bool isForwardTurn) {
 
 bool EpubReaderActivity::skipPages(int amount) {
   if (!section) return false;
+  showAuthoronThisPage = false;
   bleturner::acknowledgeLinkNote();
   if (amount > 0) {
     RenderLock lock;
@@ -2453,6 +2466,8 @@ void EpubReaderActivity::renderStatusBar() const {
     if (statusBarHeight == 0 || statusBarHeight == UITheme::getInstance().getProgressBarHeight()) {
       textYOffset += UITheme::getInstance().getMetrics().statusBarVerticalMargin;
     }
+  } else if (SETTINGS.statusBarAuthorToggle == 1 && showAuthoronThisPage) {
+    title = epub ? epub->getAuthor() : "";
   } else if (sb.titleMode == CrossPointSettings::STATUS_BAR_TITLE::CHAPTER_TITLE) {
     title = tr(STR_UNNAMED);
     if (epub) {

@@ -236,7 +236,22 @@ void ReaderActivity::loop() {
   const bool skip =
       !fromTilt && SETTINGS.longPressButtonBehavior == SETTINGS.CHAPTER_SKIP && heldMs >= ReaderUtils::SKIP_HOLD_MS;
 
-  const bool changed = skip ? skipPages(prevTriggered ? -10 : 10) : pageTurn(!prevTriggered);
+  const bool fromSideButtons = mappedInput.isPressed(MappedInputManager::Button::Up) ||
+                               mappedInput.isPressed(MappedInputManager::Button::Down) ||
+                               mappedInput.wasReleased(MappedInputManager::Button::Up) ||
+                               mappedInput.wasReleased(MappedInputManager::Button::Down);
+  const bool isNextNext = SETTINGS.sideButtonLayout == CrossPointSettings::NEXT_NEXT;
+
+  bool changed = false;
+
+  if (fromSideButtons && isNextNext && heldMs >= ReaderUtils::SKIP_HOLD_MS) {
+    changed = pageTurn(false);
+  } else if (skip) {
+    changed = skipPages(prevTriggered ? -10 : 10);
+  } else {
+    changed = pageTurn(!prevTriggered);
+  }
+
   // A skip is navigation, not reading: it never counts toward session dwell.
   notePageTurn(!skip && !prevTriggered, changed);
   if (changed && (touch.prev || touch.next)) haptic_feedback::touchAction(skip);

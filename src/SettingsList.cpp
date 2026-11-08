@@ -337,10 +337,15 @@ void forEachBaseSetting(SettingVisitor visit, void* context) {
   emit(SettingInfo::Enum(StrId::STR_TITLE, &CrossPointSettings::statusBarTitle,
                          {StrId::STR_BOOK, StrId::STR_CHAPTER, StrId::STR_HIDE}, "statusBarTitle",
                          StrId::STR_CUSTOMISE_STATUS_BAR));
+  emit(SettingInfo::Toggle(StrId::STR_AUTHOR_TOGGLE, &CrossPointSettings::statusBarAuthorToggle,
+                           "statusBarAuthorToggle", StrId::STR_CUSTOMISE_STATUS_BAR));
   emit(SettingInfo::Toggle(StrId::STR_BATTERY, &CrossPointSettings::statusBarBattery, "statusBarBattery",
                            StrId::STR_CUSTOMISE_STATUS_BAR));
   emit(SettingInfo::Enum(StrId::STR_XTC_STATUS_BAR, &CrossPointSettings::xtcStatusBarMode,
                          {StrId::STR_HIDE, StrId::STR_BOTTOM, StrId::STR_TOP}, "xtcStatusBarMode",
+                         StrId::STR_CUSTOMISE_STATUS_BAR));
+  emit(SettingInfo::Enum(StrId::STR_SB_FONT_TYPE, &CrossPointSettings::statusBarFontType,
+                         {StrId::STR_SERIF, StrId::STR_SANS_SERIF}, "statusBarFontType",
                          StrId::STR_CUSTOMISE_STATUS_BAR));
   // Clock entries (persistence + web settings; the device UI is
   // ClockSettingsActivity under System settings).

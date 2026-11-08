@@ -26,7 +26,7 @@
 namespace fui = freeink::ui;
 
 namespace {
-constexpr unsigned long GO_HOME_MS = 1000;
+constexpr unsigned long GO_HOME_MS = 500;
 constexpr size_t NAME_BUFFER_SIZE = 500;
 
 std::string getBookCachePath(const std::string& path) {
@@ -322,11 +322,7 @@ void FileBrowserActivity::activateIndex(const int index) {
 void FileBrowserActivity::onRowLongPress(const int index) {
   (void)index;  // base already synced nav.selected to the pressed row
   app.clearTapFlash();
-  if (mode == Mode::Books) {
-    showEntryActions();
-  } else {
-    activateSelected();
-  }
+  deleteSelected();
 }
 
 #if FREEINK_CAP_TOUCH
@@ -540,7 +536,7 @@ bool FileBrowserActivity::handleCustomInput() {
 bool FileBrowserActivity::handleButtons() {
   if (mode == Mode::Books && mappedInput.wasLongPressed(MappedInputManager::Button::Confirm, GO_HOME_MS)) {
     app.clearTapFlash();
-    showEntryActions();
+    deleteSelected();					 
     return true;
   }
 

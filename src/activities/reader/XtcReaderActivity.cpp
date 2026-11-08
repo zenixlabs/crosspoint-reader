@@ -93,6 +93,10 @@ XtcReaderActivity::StatusBarInfo XtcReaderActivity::getStatusBarInfo() const {
     title = chapterIt->name.empty() ? tr(STR_UNNAMED) : chapterIt->name;
   }
 
+  if (SETTINGS.statusBarAuthorToggle == 1 && showAuthoronThisPage) {
+    title = xtc->getAuthor();
+  }
+
   return StatusBarInfo{static_cast<int>(currentPage - chapterIt->startPage) + 1,
                        static_cast<int>(chapterIt->endPage - chapterIt->startPage) + 1, std::move(title)};
 }
@@ -292,6 +296,7 @@ void XtcReaderActivity::renderPage() {
 
 bool XtcReaderActivity::pageTurn(bool isForward) {
   if (!xtc) return false;
+  showAuthoronThisPage = !showAuthoronThisPage;
   if (isForward) {
     if (currentPage < xtc->getPageCount()) {
       currentPage++;
@@ -308,6 +313,7 @@ bool XtcReaderActivity::pageTurn(bool isForward) {
 
 bool XtcReaderActivity::skipPages(int amount) {
   if (!xtc) return false;
+  showAuthoronThisPage = false;
   int newPage = static_cast<int>(currentPage) + amount;
   if (newPage < 0) newPage = 0;
   if (newPage > static_cast<int>(xtc->getPageCount())) newPage = static_cast<int>(xtc->getPageCount());
