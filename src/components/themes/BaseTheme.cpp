@@ -11,7 +11,7 @@
 
 #include <algorithm>
 #include <cstdint>
-#include <regex>				
+#include <regex>
 #include <string>
 
 #include "I18n.h"
@@ -843,14 +843,12 @@ void BaseTheme::drawStatusBar(GfxRenderer& renderer, const float bookProgress, c
   const auto sb = SETTINGS.statusBarSpec();
   const bool showStatusBarTextLane = sb.textLaneVisible(halClock.isAvailable());
 
-					   
   const auto screenHeight = renderer.getScreenHeight();
-  const int textY = screenHeight - UITheme::getInstance().getStatusBarHeight() - orientedMarginBottom - paddingBottom
-						+ BoardConfig::ACTIVE.statusBarOffsetY;
+  const int textY = screenHeight - UITheme::getInstance().getStatusBarHeight() - orientedMarginBottom - paddingBottom +
+                    BoardConfig::ACTIVE.statusBarOffsetY;
   int sbFontId;
-  if (sb.fontType == 0) {
-    //sbFontId = CUSTOM1_FONT_ID;
-    sbFontId = SMALL_FONT_ID;
+  if (sb.serifFont) {
+    sbFontId = CUSTOM1_FONT_ID;
   } else {
     sbFontId = SMALL_FONT_ID;
   }
@@ -972,9 +970,6 @@ void BaseTheme::drawStatusBar(GfxRenderer& renderer, const float bookProgress, c
     renderer.fillRect(barMarginLeft, progressBarY, barWidth, barHeight, true);
   }
 
-				 
-														   
-
   // ---- Title: sized last, using whatever space is left ----
   int titleWidth = 0;
   if (!title.empty()) {
@@ -1019,7 +1014,7 @@ void BaseTheme::drawStatusBar(GfxRenderer& renderer, const float bookProgress, c
 
   auto beginItem = [&]() {
     if (drewAnything) {
-      drawSeparator();	   															   
+      drawSeparator();
     }
     drewAnything = true;
   };
@@ -1049,7 +1044,7 @@ void BaseTheme::drawStatusBar(GfxRenderer& renderer, const float bookProgress, c
     beginItem();
     renderer.drawText(sbFontId, x, textY, timeBuf);
     x += clockTextWidth;
-  }																													   
+  }
 
   // 4. Title
   if (titleWidth > 0) {
@@ -1070,10 +1065,7 @@ void BaseTheme::drawStatusBar(GfxRenderer& renderer, const float bookProgress, c
     beginItem();
     if (showEstimate) {
       const int estimateY = textY + (renderer.getLineHeight(sbFontId) - renderer.getLineHeight(UI_10_FONT_ID)) / 2;
-												
-	 
-										   
-																						
+
       renderer.drawText(UI_10_FONT_ID, x, estimateY, "~");
       x += estimateWidth + estimateSpacing;
     }

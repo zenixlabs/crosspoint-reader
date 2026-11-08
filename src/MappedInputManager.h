@@ -57,7 +57,7 @@ class MappedInputManager {
   bool wasReleased(Button button) const;
   // One-shot threshold event while the button is down; consumes its release.
   bool wasLongPressed(Button button, unsigned long thresholdMs) const;
-  void suppressNextRelease(Button button) const;												
+  void suppressNextRelease(Button button) const;
   bool consumeSuppressedRelease() const;
   bool isPressed(Button button) const;
   bool hasTouch() const;

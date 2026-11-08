@@ -536,7 +536,7 @@ bool FileBrowserActivity::handleCustomInput() {
 bool FileBrowserActivity::handleButtons() {
   if (mode == Mode::Books && mappedInput.wasLongPressed(MappedInputManager::Button::Confirm, GO_HOME_MS)) {
     app.clearTapFlash();
-    deleteSelected();					 
+    deleteSelected();
     return true;
   }
 

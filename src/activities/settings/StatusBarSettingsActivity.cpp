@@ -66,9 +66,6 @@ const StrId xtcStatusBarNames[XTC_STATUS_BAR_ITEMS] = {StrId::STR_HIDE, StrId::S
 constexpr int STATUS_BAR_CLOCK_ITEMS = CrossPointSettings::STATUS_BAR_CLOCK_MODE_COUNT;
 const StrId statusBarClockNames[STATUS_BAR_CLOCK_ITEMS] = {StrId::STR_HIDE, StrId::STR_DIR_RIGHT, StrId::STR_DIR_LEFT};
 
-constexpr int SB_FONT_TYPE_ITEMS = 2;
-const StrId statusBarFontTypeNames[SB_FONT_TYPE_ITEMS] = {StrId::STR_SERIF, StrId::STR_SANS_SERIF};
-
 const int verticalPreviewTextPadding = 40;
 }  // namespace
 
@@ -99,10 +96,6 @@ void StatusBarSettingsActivity::onEnter() {
 
   if (SETTINGS.statusBarClock >= STATUS_BAR_CLOCK_ITEMS) {
     SETTINGS.statusBarClock = CrossPointSettings::STATUS_BAR_CLOCK_MODE::STATUS_BAR_CLOCK_HIDE;
-  }
-
-  if (SETTINGS.statusBarFontType >= SB_FONT_TYPE_ITEMS) {
-    SETTINGS.statusBarFontType = CrossPointSettings::SB_FONT_TYPE::SB_FONT_TYPE_SANS_SERIF;
   }
 
   // Labels never change (unlike the values, which track live SETTINGS
@@ -158,7 +151,7 @@ void StatusBarSettingsActivity::handleSelection() {
       SETTINGS.statusBarClock = (SETTINGS.statusBarClock + 1) % STATUS_BAR_CLOCK_ITEMS;
       break;
     case ITEM_SB_FONT_TYPE:
-      SETTINGS.statusBarFontType = (SETTINGS.statusBarFontType + 1) % SB_FONT_TYPE_ITEMS;
+      SETTINGS.statusBarFontType = (SETTINGS.statusBarFontType + 1) % 2;
       break;
     default:
       return;
@@ -178,8 +171,6 @@ std::string StatusBarSettingsActivity::rowValueText(const int index) {
       return I18N.get(xtcStatusBarNames[SETTINGS.xtcStatusBarMode]);
     case ITEM_CLOCK:
       return I18N.get(statusBarClockNames[SETTINGS.statusBarClock]);
-    case ITEM_SB_FONT_TYPE:
-      return I18N.get(statusBarFontTypeNames[SETTINGS.statusBarFontType]);
     default:
       return "";
   }
@@ -210,6 +201,7 @@ void StatusBarSettingsActivity::buildScreen(UiScreen& screen) {
   GUI.setCheckboxRow(rowItems_[ITEM_BOOK_PROGRESS_PERCENTAGE], SETTINGS.statusBarBookProgressPercentage);
   GUI.setCheckboxRow(rowItems_[ITEM_BATTERY], SETTINGS.statusBarBattery);
   GUI.setCheckboxRow(rowItems_[ITEM_AUTHOR_ALT], SETTINGS.statusBarAuthorToggle);
+  GUI.setCheckboxRow(rowItems_[ITEM_SB_FONT_TYPE], SETTINGS.statusBarFontType);
 
   fui::ListProps props;
   props.items = rowItems_;

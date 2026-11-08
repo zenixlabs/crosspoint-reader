@@ -11,6 +11,7 @@ import os
 import subprocess
 import sys
 
+cp_zxl_version = '1.0.1'
 
 def warn(msg):
     print(f'WARNING [git_branch.py]: {msg}', file=sys.stderr)
@@ -86,8 +87,9 @@ def inject_version(env):
     base_version = get_base_version(project_dir)
     branch = get_git_branch(project_dir)
     short_sha = get_git_short_sha(project_dir)
-    version_string = f'{base_version}-dev-{branch}-{short_sha}'
-
+    #version_string = f'{base_version}-dev-{branch}-{short_sha}'
+    version_string = f'cp_zxl v{cp_zxl_version}'
+    
     def add_version(build_env, node):
         # Only these translation units depend on Git metadata. Keep library and
         # reader objects reusable when the branch or commit changes.

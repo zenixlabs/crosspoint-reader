@@ -264,6 +264,7 @@ class EpubReaderActivity final : public ReaderActivity {
 
   ScreenshotInfo getScreenshotInfo() const override;
   CrossPointPosition getCurrentPosition() const;
+
  private:
   bool showAuthoronThisPage = false;
 };

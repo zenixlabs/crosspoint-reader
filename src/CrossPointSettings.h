@@ -56,7 +56,6 @@ class CrossPointSettings : public PersistableStore<CrossPointSettings> {
     XTC_STATUS_BAR_MODE_COUNT
   };
 
-  enum SB_FONT_TYPE { SB_FONT_TYPE_SERIF = 0, SB_FONT_TYPE_SANS_SERIF = 1, SB_FONT_TYPE_COUNT };
   enum STATUS_BAR_CLOCK_MODE {
     STATUS_BAR_CLOCK_HIDE = 0,
     STATUS_BAR_CLOCK_RIGHT = 1,
@@ -268,7 +267,7 @@ class CrossPointSettings : public PersistableStore<CrossPointSettings> {
   uint8_t statusBarTitle = CHAPTER_TITLE;
   uint8_t statusBarBattery = 1;
   uint8_t xtcStatusBarMode = XTC_STATUS_BAR_HIDE;
-  uint8_t statusBarFontType = SB_FONT_TYPE_SANS_SERIF;													  
+  uint8_t statusBarFontType = 0;
   // Clock display in status bar (any board whose RTC probe succeeds)
   uint8_t statusBarClock = STATUS_BAR_CLOCK_HIDE;
   // LEGACY, kept for migration only: quarter-hour UTC offset biased by 48
@@ -426,7 +425,7 @@ class CrossPointSettings : public PersistableStore<CrossPointSettings> {
   bleturner::Config ble;
   // Quick Resume: keep current content visible with moon icon instead of showing a static sleep screen.
   uint8_t quickResumeSleepScreen = QUICK_RESUME_NEVER;
-  uint8_t statusBarAuthorToggle = 0;									
+  uint8_t statusBarAuthorToggle = 0;
 
   static constexpr uint8_t MIN_SLEEP_TIMEOUT_MINUTES = 1;
   static constexpr uint8_t SLEEP_TIMEOUT_NEVER_MINUTES = 31;
@@ -469,8 +468,8 @@ class CrossPointSettings : public PersistableStore<CrossPointSettings> {
     uint8_t progressBarMode = HIDE_PROGRESS;  // STATUS_BAR_PROGRESS_BAR
     uint8_t progressBarHeightPx = 0;          // (thickness+1)*2; 0 when the bar is hidden
     uint8_t xtcMode = XTC_STATUS_BAR_HIDE;    // XTC_STATUS_BAR_MODE
-    uint8_t fontType = SB_FONT_TYPE_SANS_SERIF;  // SB_FONT_TYPE
-    uint8_t authorEvenPages = 0;							
+    uint8_t serifFont = 0;                    // SB_FONT_TYPE
+    uint8_t authorEvenPages = 0;
 
     bool showsProgressBar() const { return progressBarMode != HIDE_PROGRESS; }
     bool showsTitle() const { return titleMode != HIDE_TITLE; }

@@ -4,7 +4,7 @@ _order: "0"
 _bcp47: "en"
 
 STR_AUTHOR_TOGGLE: "Alternate Title/Author"
-STR_SB_FONT_TYPE: "Font Type"
+STR_SB_FONT_TYPE: "Serif Font"
 STR_SERIF: "Serif"
 STR_SANS_SERIF: "Sans Serif"
 STR_CROSSPOINT: "CrossPoint"
