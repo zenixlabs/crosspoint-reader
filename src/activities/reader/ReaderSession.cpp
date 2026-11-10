@@ -29,8 +29,8 @@ void ReaderSession::onRenderComplete(const uint32_t monotonicMs, const int64_t t
       }
       pageCyclePages++;
       pageCycleDuration += contribution;
-	  
-      LOG_INF("XTC", "Last read page contribution: %lu secs", contribution);
+
+      LOG_INF("XTC", "Contribution: %lu secs", contribution);
       duration += contribution;
       endProgress = std::max(endProgress, progress);
     }

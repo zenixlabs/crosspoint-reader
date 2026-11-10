@@ -69,9 +69,7 @@ void XtcReaderActivity::renderBook() {
   renderPage();
   saveProgress();
 
-  if (readerSession.getpageCyclePagesRead() >= 3) {
-    writePageCycleStats();  // already resets the counters internally
-  }
+  pushPageCycleStatsToMetrics(false);
 }
 
 XtcReaderActivity::StatusBarInfo XtcReaderActivity::getStatusBarInfo() const {
@@ -338,35 +336,12 @@ void XtcReaderActivity::onReturnFromEndOfBook() {
   }
 }
 
-void XtcReaderActivity::writePageCycleStats() {
-  if (!xtc) return;
-
-  const std::string path = xtc->getCachePath() + "/session.json";
-  JsonDocument doc;
-
+void XtcReaderActivity::pushPageCycleStatsToMetrics(const bool flush) {
   const uint32_t pageCycleDuration = readerSession.getpageCycleDuration();
   const uint32_t pageCyclePages = readerSession.getpageCyclePagesRead();
+
+  xtc->updateReadingMetrics(pageCyclePages, pageCycleDuration, flush);
   readerSession.resetPageCycle();
-
-  LOG_INF("XTC", "Page cycle summary: %lu pages, %lu seconds", pageCyclePages, pageCycleDuration);
-
-  // Load existing totals (missing file → empty doc → .as<uint32_t>() returns 0)
-  HalFile f;
-  if (Storage.openFileForRead("XTC", path, f)) {
-    deserializeJson(doc, f);
-    f.close();
-  }
-
-  const uint32_t duration = doc["duration"].as<uint32_t>() + pageCycleDuration;
-  const uint32_t pages = doc["pages"].as<uint32_t>() + pageCyclePages;
-
-  doc["duration"] = duration;
-  doc["pages"] = pages;
-  doc["avgTimePerPage"] = pages > 0 ? static_cast<float>(duration) / pages : 0.0f;
-
-  String json;
-  serializeJson(doc, json);
-  Storage.writeFile(path.c_str(), json);
 }
 
 void XtcReaderActivity::saveProgress() const {
@@ -397,12 +372,14 @@ void XtcReaderActivity::loadProgress() {
 }
 
 void XtcReaderActivity::onExit() {
-  writePageCycleStats();
+  if (!xtc) return;
+  pushPageCycleStatsToMetrics(true);
   ReaderActivity::onExit();
 }
 
 void XtcReaderActivity::prepareForSleep() {
-  writePageCycleStats();
+  if (!xtc) return;
+  pushPageCycleStatsToMetrics(true);
   ReaderActivity::prepareForSleep();
 }
 

@@ -129,22 +129,66 @@ const std::vector<xtc::ChapterInfo>& Xtc::getChapters() {
 }
 
 int Xtc::getTimeRemaining(const uint32_t pages) const {
-  if (!pages || pages == 0) return 0;
+  if (cachedPagesRead == -1 || cachedDuration == -1) {
+    HalFile f;
+    if (!Storage.openFileForRead("XTC", cachePath + "/metrics.json", f)) {
+      cachedDuration = 0;
+      cachedPagesRead = 0;
+      return 0;
+    }
 
-  HalFile f;
-  if (!Storage.openFileForRead("XTC", cachePath + "/session.json", f)) {
-    return 0;
+    JsonDocument doc;
+    const DeserializationError err = deserializeJson(doc, f);
+    f.close();
+    if (err != DeserializationError::Ok) {
+      cachedDuration = 0;
+      cachedPagesRead = 0;
+      return 0;
+    }
+    cachedDuration = doc["duration"].as<int>();
+    cachedPagesRead = doc["pagesRead"].as<int>();
+  }
+  if (cachedPagesRead == 0 || cachedDuration == 0) {
+	  return 0;
   }
 
-  JsonDocument doc;
-  const DeserializationError err = deserializeJson(doc, f);
-  f.close();
-  if (err != DeserializationError::Ok) {
-    return 0;
-  }
+  const float avgSecsPerPage = static_cast<float>(cachedDuration) / static_cast<float>(cachedPagesRead);
+  LOG_INF("XTC", "Avg. reading time: %f seconds", avgSecsPerPage);  
+  return static_cast<int>(std::lround(avgSecsPerPage * pages));
+}
 
-  const float avgTime = doc["avgTimePerPage"].as<float>();
-  return static_cast<int>(std::lround(avgTime * static_cast<float>(pages)));
+void Xtc::updateReadingMetrics(const uint32_t pages, const uint32_t duration, const bool flush) {
+  if ((!pages || !duration) && !flush) { return; }
+  if (cachedDuration == -1 || cachedPagesRead == -1) {
+    getTimeRemaining(0); // populate cached values
+  }  
+  
+  cachedDuration += duration;
+  cachedPagesRead += pages;
+  pagesSinceFlush++;
+  LOG_INF("XTC", "Adding metrics: %lu pages, %lu seconds. pagesSinceFlush: %lu", pages, duration, pagesSinceFlush);  
+
+  if (flush || pagesSinceFlush >= 25) {
+    LOG_INF("XTC", "Flushing reading metrics: %lu pages, %lu seconds", cachedPagesRead, cachedDuration);
+    pagesSinceFlush = 0;
+
+    const std::string path = getCachePath() + "/metrics.json";
+    JsonDocument doc;
+
+    // Load existing totals (missing file → empty doc → .as<uint32_t>() returns 0)
+    HalFile f;
+    if (Storage.openFileForRead("XTC", path, f)) {
+      deserializeJson(doc, f);
+      f.close();
+    }
+
+    doc["duration"] = cachedDuration;
+    doc["pagesRead"] = cachedPagesRead;
+
+    String json;
+    serializeJson(doc, json);
+    Storage.writeFile(path.c_str(), json);
+  }
 }
 
 std::string Xtc::getCoverBmpPath() const { return cachePath + "/cover.bmp"; }

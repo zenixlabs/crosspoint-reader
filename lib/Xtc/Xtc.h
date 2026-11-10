@@ -74,9 +74,6 @@ class Xtc {
   uint16_t getPageHeight() const;
   uint8_t getBitDepth() const;  // 1 = XTC (1-bit), 2 = XTCH (2-bit)
 
-  // Avg time per page
-  int getTimeRemaining(uint32_t pages) const;
-
   /**
    * Load page bitmap data
    * @param pageIndex Page index (0-based)
@@ -105,4 +102,12 @@ class Xtc {
 
   // Error information
   xtc::XtcError getLastError() const;
+
+  void updateReadingMetrics(const uint32_t pages, const uint32_t duration, const bool flush);
+  int getTimeRemaining(const uint32_t pages) const;
+
+ private:
+  mutable uint8_t pagesSinceFlush = 0;
+  mutable uint32_t cachedDuration = -1;
+  mutable uint32_t cachedPagesRead = -1;
 };

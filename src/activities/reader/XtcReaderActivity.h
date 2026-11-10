@@ -48,7 +48,7 @@ class XtcReaderActivity final : public ReaderActivity {
 
  private:
   bool showAuthoronThisPage = false;
-  void writePageCycleStats();
+  void pushPageCycleStatsToMetrics(const bool flush);
   void prepareForSleep();
   void onExit();
 };
