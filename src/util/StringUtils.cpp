@@ -57,6 +57,28 @@ std::string sanitizeFilenameRange(const std::string& name, const size_t endOffse
 }
 }  // namespace
 
+std::string formatDuration(const uint32_t seconds) {
+  if (!seconds || seconds == 0) {
+    return "calc. time";
+  }
+
+  const uint32_t h = seconds / 3600;
+  const uint32_t m = (seconds % 3600) / 60;
+  const uint32_t s = seconds % 60;
+
+  char buf[24];
+  if (h > 0 && m == 0) {
+    snprintf(buf, sizeof(buf), "%luh", (unsigned long)h);
+  } else if (h > 0 && m != 0) {
+    snprintf(buf, sizeof(buf), "%luh %lum", (unsigned long)h, (unsigned long)m);
+  } else if (m > 0) {
+    snprintf(buf, sizeof(buf), "%lum", (unsigned long)m);
+  } else {
+    snprintf(buf, sizeof(buf), "<1m");
+  }
+  return buf;
+}
+
 std::string sanitizeFilename(const std::string& name, size_t maxBytes) {
   return sanitizeFilenameRange(name, name.size(), maxBytes, maxBytes);
 }

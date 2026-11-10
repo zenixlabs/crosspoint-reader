@@ -48,4 +48,7 @@ class XtcReaderActivity final : public ReaderActivity {
 
  private:
   bool showAuthoronThisPage = false;
+  void writePageCycleStats();
+  void prepareForSleep();
+  void onExit();
 };

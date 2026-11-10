@@ -7,6 +7,7 @@
 
 #include "Xtc.h"
 
+#include <ArduinoJson.h>
 #include <Bitmap.h>
 #include <HalStorage.h>
 #include <Logging.h>
@@ -125,6 +126,25 @@ const std::vector<xtc::ChapterInfo>& Xtc::getChapters() {
     return kEmpty;
   }
   return parser->getChapters();
+}
+
+int Xtc::getTimeRemaining(const uint32_t pages) const {
+  if (!pages || pages == 0) return 0;
+
+  HalFile f;
+  if (!Storage.openFileForRead("XTC", cachePath + "/session.json", f)) {
+    return 0;
+  }
+
+  JsonDocument doc;
+  const DeserializationError err = deserializeJson(doc, f);
+  f.close();
+  if (err != DeserializationError::Ok) {
+    return 0;
+  }
+
+  const float avgTime = doc["avgTimePerPage"].as<float>();
+  return static_cast<int>(std::lround(avgTime * static_cast<float>(pages)));
 }
 
 std::string Xtc::getCoverBmpPath() const { return cachePath + "/cover.bmp"; }

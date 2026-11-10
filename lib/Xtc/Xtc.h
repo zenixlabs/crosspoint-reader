@@ -74,6 +74,9 @@ class Xtc {
   uint16_t getPageHeight() const;
   uint8_t getBitDepth() const;  // 1 = XTC (1-bit), 2 = XTCH (2-bit)
 
+  // Avg time per page
+  int getTimeRemaining(uint32_t pages) const;
+
   /**
    * Load page bitmap data
    * @param pageIndex Page index (0-based)

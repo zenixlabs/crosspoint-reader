@@ -11,7 +11,7 @@ import os
 import subprocess
 import sys
 
-cp_zxl_version = '1.0.2'
+cp_zxl_version = '1.0.2_tleft'
 
 def warn(msg):
     print(f'WARNING [git_branch.py]: {msg}', file=sys.stderr)
