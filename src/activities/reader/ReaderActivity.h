@@ -56,6 +56,7 @@ class ReaderActivity : public Activity {
   virtual void onReturnFromEndOfBook() {}
 
   virtual void renderBook() = 0;
+  virtual void pushMetrics() {}
   virtual void applyInitialOrientation();
   virtual void onEndOfBookRendered() {}
 

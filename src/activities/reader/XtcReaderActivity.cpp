@@ -68,8 +68,10 @@ void XtcReaderActivity::renderBook() {
 
   renderPage();
   saveProgress();
+}
 
-  pushPageCycleStatsToMetrics(false);
+void XtcReaderActivity::pushMetrics() {
+  if (xtc)pushPageCycleStatsToMetrics(false);
 }
 
 XtcReaderActivity::StatusBarInfo XtcReaderActivity::getStatusBarInfo() const {

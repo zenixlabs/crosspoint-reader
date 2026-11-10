@@ -166,10 +166,10 @@ void Xtc::updateReadingMetrics(const uint32_t pages, const uint32_t duration, co
   cachedDuration += duration;
   cachedPagesRead += pages;
   pagesSinceFlush++;
-  LOG_INF("XTC", "Adding metrics: %lu pages, %lu seconds. pagesSinceFlush: %lu", pages, duration, pagesSinceFlush);  
+  LOG_INF("XTC", "[Xtc.cpp] Adding metrics: %lu pages, %lu seconds. pagesSinceFlush: %lu", pages, duration, pagesSinceFlush);  
 
   if (flush || pagesSinceFlush >= 25) {
-    LOG_INF("XTC", "Flushing reading metrics: %lu pages, %lu seconds", cachedPagesRead, cachedDuration);
+    LOG_INF("XTC", "[Xtc.cpp] Flushing metrics: %lu pages, %lu seconds", cachedPagesRead, cachedDuration);
     pagesSinceFlush = 0;
 
     const std::string path = getCachePath() + "/metrics.json";
