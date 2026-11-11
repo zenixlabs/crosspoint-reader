@@ -5,7 +5,7 @@
 #include <algorithm>
 
 namespace {
-constexpr uint32_t MIN_DWELL_SECONDS = 3;
+constexpr uint32_t MIN_DWELL_SECONDS = 15;
 constexpr uint32_t MAX_DWELL_SECONDS = 240;
 }  // namespace
 
