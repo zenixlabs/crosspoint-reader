@@ -14,6 +14,10 @@
 #include <freertos/FreeRTOS.h>
 #include <freertos/task.h>
 
+#include <algorithm>
+#include <array>
+#include <deque>
+
 namespace {
 void yieldDuringThumbnail(uint8_t& rowsSinceYield) {
   if (++rowsSinceYield < 8) return;
@@ -128,8 +132,28 @@ const std::vector<xtc::ChapterInfo>& Xtc::getChapters() {
   return parser->getChapters();
 }
 
+static float median(const std::deque<uint32_t>* durations) {
+  if (!durations || durations->empty()) {
+    return 0.0f;
+  }
+
+  // Fixed stack buffer: no heap allocation, and the window is capped at 20 anyway
+  std::array<uint32_t, 20> buf;
+  const size_t n = std::min<size_t>(durations->size(), buf.size());
+  std::copy_n(durations->begin(), n, buf.begin());
+  std::sort(buf.begin(), buf.begin() + n);
+
+  if (n % 2 == 1) {
+    return static_cast<float>(buf[n / 2]);
+  }
+  return (static_cast<float>(buf[n / 2 - 1]) + static_cast<float>(buf[n / 2])) / 2.0f;
+}
+
 int Xtc::getTimeRemaining(const uint32_t pages) const {
   if (cachedPagesRead == -1 || cachedDuration == -1) {
+	LOG_DBG("XTC", "[Xtc.cpp] Reading from metrics.json");
+    shortTermSamples.clear();
+
     HalFile f;
     if (!Storage.openFileForRead("XTC", cachePath + "/metrics.json", f)) {
       cachedDuration = 0;
@@ -147,35 +171,66 @@ int Xtc::getTimeRemaining(const uint32_t pages) const {
     }
     cachedDuration = doc["duration"].as<int>();
     cachedPagesRead = doc["pagesRead"].as<int>();
+
+    // Restore the persisted rolling window so a later flush doesn't overwrite it
+    // with only the durations recorded since boot.
+    for (JsonVariant v : doc["shortTermSamples"].as<JsonArray>()) {
+      shortTermSamples.push_back(v.as<uint32_t>());
+      while (shortTermSamples.size() > shortTermSamplesMaxSize) {
+        shortTermSamples.pop_front();
+      }
+    }
   }
   if (cachedPagesRead == 0 || cachedDuration == 0) {
-	  return 0;
+    return 0;
   }
 
-  const float avgSecsPerPage = static_cast<float>(cachedDuration) / static_cast<float>(cachedPagesRead);
-  LOG_INF("XTC", "Avg. reading time: %f seconds", avgSecsPerPage);  
-  return static_cast<int>(std::lround(avgSecsPerPage * pages));
+  // for finding avg. secs per page, we take into account the median secs per page for the last 20 pages and
+  // also the global avg. secs per page.
+
+  const float globalAvgPace = static_cast<float>(cachedDuration) / static_cast<float>(cachedPagesRead);
+
+  float correctedSecsPerPage = globalAvgPace;
+  if (!shortTermSamples.empty()) {
+    const float shortTermPace = median(&shortTermSamples);  // only last 20 pages
+    correctedSecsPerPage = alpha * shortTermPace + (1.0f - alpha) * globalAvgPace;
+	
+    //LOG_INF("XTC", "secs. per page - global: %f, median: %f, corrected: %f", globalAvgPace, shortTermPace, correctedSecsPerPage);	
+  }
+
+  return static_cast<int>(std::lround(correctedSecsPerPage * pages));
 }
 
-void Xtc::updateReadingMetrics(const uint32_t pages, const uint32_t duration, const bool flush) {
-  if ((!pages || !duration) && !flush) { return; }
+void Xtc::updateReadingMetrics(const uint32_t duration, const bool flush) {
+  if (!duration && !flush) {
+    return;
+  }
   if (cachedDuration == -1 || cachedPagesRead == -1) {
-    getTimeRemaining(0); // populate cached values
-  }  
-  
-  cachedDuration += duration;
-  cachedPagesRead += pages;
-  pagesSinceFlush++;
-  LOG_INF("XTC", "[Xtc.cpp] Adding metrics: %lu pages, %lu seconds. pagesSinceFlush: %lu", pages, duration, pagesSinceFlush);  
+    getTimeRemaining(0);  // populate cached values and the shortTermSamples window
+  }
 
-  if (flush || pagesSinceFlush >= 25) {
-    LOG_INF("XTC", "[Xtc.cpp] Flushing metrics: %lu pages, %lu seconds", cachedPagesRead, cachedDuration);
+  if (duration > 0) {
+    cachedDuration += duration;
+    cachedPagesRead++;
+    pagesSinceFlush++;
+
+    // Rolling window of the last 20 durations
+    while (shortTermSamples.size() > shortTermSamplesMaxSize) {
+      shortTermSamples.pop_front();
+    }
+    shortTermSamples.push_back(duration);
+
+    //LOG_INF("XTC", "[Xtc.cpp] Adding metrics: %lu seconds. pagesSinceFlush: %lu", duration, pagesSinceFlush);
+  }
+
+  if (flush || pagesSinceFlush >= maxPagesSinceFlush) {
+    LOG_INF("XTC", "[Xtc.cpp] Flushing total book metrics: %lu pages, %lu seconds", cachedPagesRead, cachedDuration);
     pagesSinceFlush = 0;
 
     const std::string path = getCachePath() + "/metrics.json";
     JsonDocument doc;
 
-    // Load existing totals (missing file → empty doc → .as<uint32_t>() returns 0)
+    // Load existing totals (missing file → empty doc)
     HalFile f;
     if (Storage.openFileForRead("XTC", path, f)) {
       deserializeJson(doc, f);
@@ -184,6 +239,11 @@ void Xtc::updateReadingMetrics(const uint32_t pages, const uint32_t duration, co
 
     doc["duration"] = cachedDuration;
     doc["pagesRead"] = cachedPagesRead;
+
+    JsonArray arr = doc["shortTermSamples"].to<JsonArray>();  // replaces any old array
+    for (const uint32_t d : shortTermSamples) {
+      arr.add(d);
+    }
 
     String json;
     serializeJson(doc, json);

@@ -7,6 +7,7 @@
 
 #pragma once
 
+#include <deque>
 #include <memory>
 #include <string>
 #include <vector>
@@ -103,11 +104,18 @@ class Xtc {
   // Error information
   xtc::XtcError getLastError() const;
 
-  void updateReadingMetrics(const uint32_t pages, const uint32_t duration, const bool flush);
+  // avg page time
+  void updateReadingMetrics(const uint32_t duration, const bool flush);
   int getTimeRemaining(const uint32_t pages) const;
 
  private:
+ 
+  // avg page time
+  mutable std::deque<uint32_t> shortTermSamples;  
+  const uint16_t shortTermSamplesMaxSize = 20; 	// # of pages for calc. median secs per page
   mutable uint8_t pagesSinceFlush = 0;
+  const uint16_t maxPagesSinceFlush = 50;
   mutable uint32_t cachedDuration = -1;
   mutable uint32_t cachedPagesRead = -1;
+  const float alpha = 0.7f;
 };

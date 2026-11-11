@@ -71,7 +71,7 @@ void XtcReaderActivity::renderBook() {
 }
 
 void XtcReaderActivity::pushMetrics() {
-  if (xtc)pushPageCycleStatsToMetrics(false);
+  if (xtc) pushPageCycleStatsToMetrics(false);
 }
 
 XtcReaderActivity::StatusBarInfo XtcReaderActivity::getStatusBarInfo() const {
@@ -340,9 +340,8 @@ void XtcReaderActivity::onReturnFromEndOfBook() {
 
 void XtcReaderActivity::pushPageCycleStatsToMetrics(const bool flush) {
   const uint32_t pageCycleDuration = readerSession.getpageCycleDuration();
-  const uint32_t pageCyclePages = readerSession.getpageCyclePagesRead();
 
-  xtc->updateReadingMetrics(pageCyclePages, pageCycleDuration, flush);
+  xtc->updateReadingMetrics(pageCycleDuration, flush);
   readerSession.resetPageCycle();
 }
 

@@ -17,12 +17,8 @@ class ReaderSession {
   uint16_t startProgressBp() const { return startProgress; }
   uint16_t endProgressBp() const { return endProgress; }
 
-  uint32_t getpageCyclePagesRead() const { return pageCyclePages; }
   uint32_t getpageCycleDuration() const { return pageCycleDuration; }
-  void resetPageCycle() {
-    pageCyclePages = 0;
-    pageCycleDuration = 0;
-  }
+  void resetPageCycle() { pageCycleDuration = 0; }
 
  private:
   static uint16_t clampProgress(int progressBp);
@@ -37,6 +33,5 @@ class ReaderSession {
   bool hasAnchor = false;
   bool pendingForward = false;
 
-  uint16_t pageCyclePages = 0;
   uint16_t pageCycleDuration = 0;
 };

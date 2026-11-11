@@ -32,7 +32,7 @@ class XtcReaderActivity final : public ReaderActivity {
   bool handleFormatInput() override;
   void renderBook() override;
   void applyInitialOrientation() override;
-  void pushMetrics() override;  
+  void pushMetrics() override;
 
  public:
   explicit XtcReaderActivity(GfxRenderer& renderer, MappedInputManager& mappedInput, std::string bookPath,

@@ -6,7 +6,7 @@
 
 namespace {
 constexpr uint32_t MIN_DWELL_SECONDS = 15;
-constexpr uint32_t MAX_DWELL_SECONDS = 240;
+constexpr uint32_t MAX_DWELL_SECONDS = 180;
 }  // namespace
 
 uint16_t ReaderSession::clampProgress(const int progressBp) {
@@ -27,10 +27,9 @@ void ReaderSession::onRenderComplete(const uint32_t monotonicMs, const int64_t t
         startProgress = anchorProgress;
         endProgress = anchorProgress;
       }
-      pageCyclePages++;
       pageCycleDuration += contribution;
 
-      LOG_INF("XTC", "[ReaderSession] Contribution: %lu secs", contribution);
+      //LOG_INF("XTC", "[ReaderSession] Contribution: %lu secs", contribution);
       duration += contribution;
       endProgress = std::max(endProgress, progress);
     }
