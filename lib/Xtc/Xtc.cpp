@@ -137,8 +137,8 @@ static float median(const std::deque<uint32_t>* durations) {
     return 0.0f;
   }
 
-  // Fixed stack buffer: no heap allocation, and the window is capped at 20 anyway
-  std::array<uint32_t, 20> buf;
+  // Fixed stack buffer: no heap allocation, 
+  std::array<uint32_t, 20 > buf; // 2nd arg. should match shortTermSamplesMaxSize
   const size_t n = std::min<size_t>(durations->size(), buf.size());
   std::copy_n(durations->begin(), n, buf.begin());
   std::sort(buf.begin(), buf.begin() + n);
@@ -193,7 +193,12 @@ int Xtc::getTimeRemaining(const uint32_t pages) const {
   float correctedSecsPerPage = globalAvgPace;
   if (!shortTermSamples.empty()) {
     const float shortTermPace = median(&shortTermSamples);  // only last 20 pages
-    correctedSecsPerPage = alpha * shortTermPace + (1.0f - alpha) * globalAvgPace;
+
+    // With only 1 or 2 samples in the window, alpha = 0.7 gives most of the weight to a 
+	// median of one value. Ramp the weight up as the window fills:	
+    constexpr float kRampSamples = 5.0f;
+    const float w = alpha * std::min(1.0f, shortTermSamples.size() / kRampSamples);
+    correctedSecsPerPage = w * shortTermPace + (1.0f - w) * globalAvgPace;
 	
     //LOG_INF("XTC", "secs. per page - global: %f, median: %f, corrected: %f", globalAvgPace, shortTermPace, correctedSecsPerPage);	
   }
@@ -215,7 +220,7 @@ void Xtc::updateReadingMetrics(const uint32_t duration, const bool flush) {
     pagesSinceFlush++;
 
     // Rolling window of the last 20 durations
-    while (shortTermSamples.size() > shortTermSamplesMaxSize) {
+    while (shortTermSamples.size() >= shortTermSamplesMaxSize) {
       shortTermSamples.pop_front();
     }
     shortTermSamples.push_back(duration);

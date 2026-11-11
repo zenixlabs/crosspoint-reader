@@ -112,7 +112,7 @@ class Xtc {
  
   // avg page time
   mutable std::deque<uint32_t> shortTermSamples;  
-  const uint16_t shortTermSamplesMaxSize = 20; 	// # of pages for calc. median secs per page
+  const uint16_t shortTermSamplesMaxSize = 20; 	// needs to match median calc. func.
   mutable uint8_t pagesSinceFlush = 0;
   const uint16_t maxPagesSinceFlush = 50;
   mutable uint32_t cachedDuration = -1;
