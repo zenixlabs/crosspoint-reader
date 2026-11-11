@@ -220,10 +220,11 @@ void Xtc::updateReadingMetrics(const uint32_t duration, const bool flush) {
     pagesSinceFlush++;
 
     // Rolling window of the last 20 durations
-    while (shortTermSamples.size() >= shortTermSamplesMaxSize) {
+    shortTermSamples.push_back(duration);	
+    while (shortTermSamples.size() > shortTermSamplesMaxSize) {
       shortTermSamples.pop_front();
     }
-    shortTermSamples.push_back(duration);
+
 
     //LOG_INF("XTC", "[Xtc.cpp] Adding metrics: %lu seconds. pagesSinceFlush: %lu", duration, pagesSinceFlush);
   }

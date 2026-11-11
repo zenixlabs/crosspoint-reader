@@ -63,8 +63,9 @@ std::string formatDuration(const uint32_t seconds) {
   }
 
   const uint32_t h = seconds / 3600;
-  const uint32_t m = (seconds % 3600) / 60;
+  uint32_t m = (seconds % 3600) / 60;
   const uint32_t s = seconds % 60;
+  if (s > 30 ) { m++; }
 
   char buf[24];
   if (h > 0 && m == 0) {
