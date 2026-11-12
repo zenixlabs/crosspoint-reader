@@ -133,13 +133,13 @@ void XtcReaderChapterSelectionActivity::buildScreen(UiScreen& screen) {
     // progressLine = std::string(tr(STR_CHAPTER_PREFIX)) + std::string(tr(STR_PAGE)) + std::to_string(chapterPage) +
     // "/" + std::to_string(chapterTotal);
 
-    const int32_t chapterTimeLeft = xtc->getTimeRemaining(chapterTotal - chapterPage + 1);
+    const int32_t chapterTimeLeft = xtc->getTimeRemaining(chapterTotal - chapterPage + 1, false);
     std::string chapterTimeLeftStr =
         StringUtils::formatDuration(static_cast<uint32_t>(chapterTimeLeft)) + std::string(tr(STR_LEFT));
     progressLine += std::string(tr(STR_CHAPTER_PREFIX)) + chapterTimeLeftStr + std::string(tr(STR_SEPARATOR));
   }
 
-  const int32_t bookTimeLeft = xtc->getTimeRemaining(bookPageCount - bookPage + 1);
+  const int32_t bookTimeLeft = xtc->getTimeRemaining(bookPageCount - bookPage + 1, true);
   std::string bookTimeLeftStr =
       StringUtils::formatDuration(static_cast<uint32_t>(bookTimeLeft)) + std::string(tr(STR_LEFT));
   progressLine += std::string(tr(STR_BOOK_PREFIX)) + bookTimeLeftStr;

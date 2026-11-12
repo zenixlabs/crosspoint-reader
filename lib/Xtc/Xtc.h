@@ -106,7 +106,7 @@ class Xtc {
 
   // avg page time
   void updateReadingMetrics(const uint32_t duration, const bool flush);
-  int getTimeRemaining(const uint32_t pages) const;
+  int getTimeRemaining(const uint32_t pages, const bool isBook) const;
 
  private:
  
@@ -117,5 +117,5 @@ class Xtc {
   const uint16_t maxPagesSinceFlush = 50;
   mutable uint32_t cachedDuration = -1;
   mutable uint32_t cachedPagesRead = -1;
-  const float alpha = 0.7f;
+  mutable float alpha = 0.7f;
 };
