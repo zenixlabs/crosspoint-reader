@@ -11,8 +11,11 @@
 
 #include <algorithm>
 #include <cstdint>
-#include <regex>
 #include <string>
+
+#include <cctype>
+#include <cstring>
+#include <strings.h>
 
 #include "I18n.h"
 #include "RecentBooksStore.h"
@@ -808,27 +811,76 @@ void BaseTheme::fillPopupProgress(const GfxRenderer& renderer, const Rect& layou
   renderer.displayBuffer(HalDisplay::FAST_REFRESH);
 }
 
+static bool isPunctOrSpace(const unsigned char c) { return std::ispunct(c) || std::isspace(c); }
+
+static size_t skipSpaces(const std::string& s, size_t i) {
+  while (i < s.size() && std::isspace(static_cast<unsigned char>(s[i]))) i++;
+  return i;
+}
+
+// Returns the remainder if non-empty, otherwise the original name.
 static std::string cleanUpTitle(const std::string& name) {
-  if (name.empty()) return name;
+  const size_t n = name.size();
+  if (n == 0) return name;
 
-  static const std::regex patterns[] = {
-      // 1. "12. Title" -> "Title"
-      std::regex(R"(^\d+[\s\p{P}]+(.+))", std::regex::extended),  // see note below
-      // 2. "IV. Title" / "XIV - Title"
-      std::regex("^[IVXLCDMivxlcdm]+[[:punct:]]+[[:space:]]*(.+)"),
-      // 3. "Chapter 1 - X" / "Part two: X"
-      std::regex(
-          "^[Cc][Hh][Aa][Pp][Tt][Ee][Rr][[:space:]]+[[:alnum:]-]+[[:space:]]*[[:punct:][:space:]][[:space:]]+(.+)"),
-      std::regex("^[Pp][Aa][Rr][Tt][[:space:]]+[[:alnum:]-]+[[:space:]]*[[:punct:][:space:]][[:space:]]+(.+)"),
-      // 4. "chapter twenty" / "part twenty-two" (whole string)
-      std::regex("^[Cc][Hh][Aa][Pp][Tt][Ee][Rr][[:space:]]+([[:alpha:]-]+)$"),
-      std::regex("^[Pp][Aa][Rr][Tt][[:space:]]+([[:alpha:]-]+)$"),
-  };
+  auto rest = [&](size_t i) -> std::string { return i < n ? name.substr(i) : name; };
 
-  std::smatch m;
-  for (const auto& re : patterns) {
-    if (std::regex_search(name, m, re) && m.size() > 1) return m[1].str();
+  // 1. "12. Title" -> "Title"   (digits, then at least one space/punct)
+  {
+    size_t i = 0;
+    while (i < n && std::isdigit(static_cast<unsigned char>(name[i]))) i++;
+    if (i > 0) {
+      const size_t sepStart = i;
+      while (i < n && isPunctOrSpace(static_cast<unsigned char>(name[i]))) i++;
+      if (i > sepStart && i < n) return name.substr(i);
+    }
   }
+
+  // 2. "IV. Title" / "XIV - Title"   (roman numerals, then at least one punct, optional spaces)
+  {
+    size_t i = 0;
+    while (i < n && std::strchr("IVXLCDMivxlcdm", name[i]) && name[i] != '\0') i++;
+    if (i > 0) {
+      const size_t punctStart = i;
+      while (i < n && std::ispunct(static_cast<unsigned char>(name[i]))) i++;
+      if (i > punctStart) {
+        i = skipSpaces(name, i);
+        if (i < n) return name.substr(i);
+      }
+    }
+  }
+
+  // 3/4. "Chapter X <sep> Title"  /  "Part X <sep> Title"  /  "Chapter twenty" (whole string)
+  for (const char* word : {"chapter", "part"}) {
+    const size_t wl = std::strlen(word);
+    if (n <= wl || strncasecmp(name.c_str(), word, wl) != 0) continue;
+    if (!std::isspace(static_cast<unsigned char>(name[wl]))) continue;
+
+    size_t i = skipSpaces(name, wl);
+    const size_t tokStart = i;
+    while (i < n && (std::isalnum(static_cast<unsigned char>(name[i])) || name[i] == '-')) i++;
+    if (i == tokStart) continue;
+
+    // whole-string form: "chapter twenty" -> "twenty" (letters/hyphens only)
+    if (i == n) {
+      bool alphaOnly = true;
+      for (size_t k = tokStart; k < n; k++) {
+        if (!std::isalpha(static_cast<unsigned char>(name[k])) && name[k] != '-') alphaOnly = false;
+      }
+      if (alphaOnly) return name.substr(tokStart);
+      continue;
+    }
+
+    // "Chapter X - Title": optional spaces, one punct/space, then at least one space, then the title
+    size_t j = skipSpaces(name, i);
+    if (j < n && isPunctOrSpace(static_cast<unsigned char>(name[j]))) {
+      j++;
+      const size_t spStart = j;
+      j = skipSpaces(name, j);
+      if (j > spStart && j < n) return name.substr(j);
+    }
+  }
+
   return name;
 }
 
