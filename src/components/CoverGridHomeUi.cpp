@@ -316,6 +316,7 @@ void CoverGridHomeUi::drawTabs(UiScreen& screen, fui::Rect rect) {
 
 bool CoverGridHomeUi::paintFramedCover(fui::DrawTarget& target, fui::Rect rect, size_t index) {
   constexpr int16_t SHADOW_OFFSET = 2;
+  constexpr int CORNER_RADIUS = 8;
   const auto ink = fui::Paint::solid(fui::Color::Black);
   target.fill(fui::Rect{rect.right(), static_cast<int16_t>(rect.y + SHADOW_OFFSET), SHADOW_OFFSET, rect.height}, ink);
   target.fill(fui::Rect{static_cast<int16_t>(rect.x + SHADOW_OFFSET), rect.bottom(), rect.width, SHADOW_OFFSET}, ink);

@@ -13,6 +13,7 @@ void RecentBooksStore::toJson(JsonDocument& doc) const {
     obj["title"] = book.title;
     obj["author"] = book.author;
     obj["coverBmpPath"] = book.coverBmpPath;
+    obj["progress"] = book.progress;
   }
 }
 
@@ -29,6 +30,7 @@ bool RecentBooksStore::fromJson(JsonVariantConst doc) {
     book.title = obj["title"] | "";
     book.author = obj["author"] | "";
     book.coverBmpPath = obj["coverBmpPath"] | "";
+    book.progress = obj["progress"] | -1;  // old files have no field: becomes "not computed"
     recentBooks.push_back(book);
   }
 
@@ -99,6 +101,17 @@ void RecentBooksStore::updatePath(const std::string& oldPath, const std::string&
   if (!oldCachePath.empty() && !it->coverBmpPath.empty() && it->coverBmpPath.rfind(oldCachePath, 0) == 0) {
     it->coverBmpPath = newCachePath + it->coverBmpPath.substr(oldCachePath.size());
   }
+  saveToFile();
+}
+
+void RecentBooksStore::updateProgress(const std::string& path, const int percent) {
+  const int clamped = std::clamp(percent, 0, 100);
+  auto it =
+      std::find_if(recentBooks.begin(), recentBooks.end(), [&](const RecentBook& book) { return book.path == path; });
+  if (it == recentBooks.end() || it->progress == clamped) {
+    return;  // not in the list, or unchanged: no write
+  }
+  it->progress = clamped;
   saveToFile();
 }
 

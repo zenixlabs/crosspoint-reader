@@ -118,7 +118,12 @@ void ActivityManager::loop() {
   }
 
   if (currentActivity) {
-    if (!currentActivity->isHomeActivity() && mappedInput.wasHomeGesture()) {
+    // hold back anywhere to goHOme.
+    const bool backLongPressedOutsideReader = !currentActivity->isHomeActivity() &&
+                                              !currentActivity->isReaderActivity() &&
+                                              mappedInput.wasLongPressed(MappedInputManager::Button::Back, 500);
+
+    if (!currentActivity->isHomeActivity() && (mappedInput.wasHomeGesture() || backLongPressedOutsideReader)) {
       if (currentActivity->handleHomeGesture()) {
         return;
       }
@@ -368,10 +373,10 @@ void ActivityManager::goHome(HomeMenuItem initialMenuItem, bool cleanInitialRefr
     const auto& activityName = currentActivity->name;
     if (activityName == "FileBrowser") {
       initialMenuItem = HomeMenuItem::FILE_BROWSER;
-    } else if (activityName == "Library") {
-      initialMenuItem = HomeMenuItem::LIBRARY;
-    } else if (activityName == "RecentBooks") {
-      initialMenuItem = HomeMenuItem::LIBRARY;
+      // } else if (activityName == "Library") {
+      // initialMenuItem = HomeMenuItem::LIBRARY;
+      // } else if (activityName == "RecentBooks") {
+      // initialMenuItem = HomeMenuItem::LIBRARY;
     } else if (activityName == "OpdsBookBrowser" || activityName == "PluginCatalog") {
       initialMenuItem = HomeMenuItem::OPDS_BROWSER;
     } else if (activityName == "CrossPointWebServer") {

@@ -12,9 +12,11 @@
 #include "ProgressFile.h"
 #include "ReaderActivity.h"
 #include "ReaderUtils.h"
+#include "RecentBooksStore.h"
 #include "XtcReaderChapterSelectionActivity.h"
 #include "components/UITheme.h"
 #include "fontIds.h"
+#include "util/StringUtils.h"
 
 bool XtcReaderActivity::loadBook() {
   auto loadedXtc = makeUniqueNoThrow<Xtc>(bookPath, "/.crosspoint");
@@ -70,6 +72,10 @@ void XtcReaderActivity::renderBook() {
   saveProgress();
 }
 
+void XtcReaderActivity::pushMetrics() {
+  if (xtc) pushPageCycleStatsToMetrics(false);
+}
+
 XtcReaderActivity::StatusBarInfo XtcReaderActivity::getStatusBarInfo() const {
   const auto sb = SETTINGS.statusBarSpec();
   const int bookPageCount = static_cast<int>(xtc->getPageCount());
@@ -77,7 +83,7 @@ XtcReaderActivity::StatusBarInfo XtcReaderActivity::getStatusBarInfo() const {
   std::string title = sb.titleMode == CrossPointSettings::STATUS_BAR_TITLE::BOOK_TITLE ? xtc->getTitle() : "";
 
   if (!xtc->hasChapters()) {
-    return StatusBarInfo{bookPage, bookPageCount, std::move(title)};
+    return StatusBarInfo{bookPage, bookPageCount, std::move(title), bookPage, bookPageCount};
   }
 
   const auto& chapters = xtc->getChapters();
@@ -86,7 +92,7 @@ XtcReaderActivity::StatusBarInfo XtcReaderActivity::getStatusBarInfo() const {
   });
 
   if (chapterIt == chapters.end() || chapterIt->endPage < chapterIt->startPage) {
-    return StatusBarInfo{bookPage, bookPageCount, std::move(title)};
+    return StatusBarInfo{bookPage, bookPageCount, std::move(title), bookPage, bookPageCount};
   }
 
   if (sb.titleMode == CrossPointSettings::STATUS_BAR_TITLE::CHAPTER_TITLE) {
@@ -98,7 +104,8 @@ XtcReaderActivity::StatusBarInfo XtcReaderActivity::getStatusBarInfo() const {
   }
 
   return StatusBarInfo{static_cast<int>(currentPage - chapterIt->startPage) + 1,
-                       static_cast<int>(chapterIt->endPage - chapterIt->startPage) + 1, std::move(title)};
+                       static_cast<int>(chapterIt->endPage - chapterIt->startPage) + 1, std::move(title), bookPage,
+                       bookPageCount};
 }
 
 void XtcReaderActivity::renderStatusBarOverlay(GfxRenderer& renderer, const StatusBarOverlayPosition position) const {
@@ -137,12 +144,16 @@ void XtcReaderActivity::renderStatusBarOverlay(GfxRenderer& renderer, const Stat
   if (clearHeight > 0) {
     renderer.fillRect(0, clearY, renderer.getScreenWidth(), clearHeight, false);
   }
-
-  const int pageCount = static_cast<int>(xtc->getPageCount());
-  const int displayPage = static_cast<int>(currentPage) + 1;
-  const float progress = pageCount > 0 ? (static_cast<float>(displayPage) * 100.0f) / pageCount : 0.0f;
   const auto pageInfo = getStatusBarInfo();
-  GUI.drawStatusBar(renderer, progress, pageInfo.currentPage, pageInfo.pageCount, pageInfo.title, paddingBottom);
+
+  const uint16_t progress =
+      pageInfo.bookPageCount > 0 ? static_cast<uint16_t>(pageInfo.bookPage * 100 / pageInfo.bookPageCount) : 0;
+  std::string title = pageInfo.title;
+  if (!(SETTINGS.statusBarAuthorToggle == 1 && showAuthoronThisPage)) {
+    title = StringUtils::sanitizeChapterName(title);
+  }
+
+  GUI.drawStatusBar(renderer, progress, pageInfo.currentPage, pageInfo.pageCount, title, paddingBottom);
 }
 
 void XtcReaderActivity::renderPage() {
@@ -334,6 +345,13 @@ void XtcReaderActivity::onReturnFromEndOfBook() {
   }
 }
 
+void XtcReaderActivity::pushPageCycleStatsToMetrics(const bool flush) {
+  const uint32_t pageCycleDuration = readerSession.getpageCycleDuration();
+
+  xtc->updateReadingMetrics(pageCycleDuration, flush);
+  readerSession.resetPageCycle();
+}
+
 void XtcReaderActivity::saveProgress() const {
   if (!xtc) return;
   uint8_t data[4];
@@ -359,6 +377,27 @@ void XtcReaderActivity::loadProgress() {
       LOG_DBG("XTC", "Loaded progress: page %lu/%lu", currentPage + 1, xtc->getPageCount());
     }
   }
+}
+
+void XtcReaderActivity::saveProgressPercent() {
+  const int bookPageCount = static_cast<int>(xtc->getPageCount());
+  const int bookPage = static_cast<int>(currentPage) + 1;
+  const uint16_t bookProgress = bookPageCount > 0 ? static_cast<uint16_t>(bookPage * 100 / bookPageCount) : 0;
+  RECENT_BOOKS.updateProgress(bookPath, bookProgress);
+}
+
+void XtcReaderActivity::onExit() {
+  if (!xtc) return;
+  saveProgressPercent();
+  pushPageCycleStatsToMetrics(true);
+  ReaderActivity::onExit();
+}
+
+void XtcReaderActivity::prepareForSleep() {
+  if (!xtc) return;
+  saveProgressPercent();
+  pushPageCycleStatsToMetrics(true);
+  ReaderActivity::prepareForSleep();
 }
 
 ScreenshotInfo XtcReaderActivity::getScreenshotInfo() const {
