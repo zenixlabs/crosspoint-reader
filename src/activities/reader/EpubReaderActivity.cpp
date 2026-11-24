@@ -60,6 +60,7 @@
 #include "util/BookmarkUtil.h"
 #include "util/ButtonNavigator.h"
 #include "util/ScreenshotUtil.h"
+#include "util/StringUtils.h"
 
 namespace {
 // The X4 Pro and X4 Classic carry the X4's panel but sit outside isXteinkDevice()
@@ -2443,8 +2444,8 @@ void EpubReaderActivity::drawClippingHighlights(const Page& page, const int font
 void EpubReaderActivity::renderStatusBar() const {
   const int currentPage = section ? section->currentPage + 1 : 1;
   const float pageCount = section ? section->estimatedTotalPages() : 1;
-  const float sectionChapterProg = (pageCount > 0) ? (static_cast<float>(currentPage) / pageCount) : 0;
-  const float bookProgress = epub ? (epub->calculateProgress(currentSpineIndex, sectionChapterProg) * 100) : 0;
+  const ChapterPosition position = chapterPosition();
+  const int bookProgress = bookPercentFor(position);
 
   std::string title;
   int textYOffset = 0;
@@ -2479,6 +2480,10 @@ void EpubReaderActivity::renderStatusBar() const {
     }
   } else if (sb.titleMode == CrossPointSettings::STATUS_BAR_TITLE::BOOK_TITLE) {
     title = epub ? epub->getTitle() : "";
+  }
+
+  if (!(SETTINGS.statusBarAuthorToggle == 1 && showAuthoronThisPage)) {
+    title = StringUtils::sanitizeChapterName(title);
   }
 
   GUI.drawStatusBar(renderer, bookProgress, currentPage, pageCount, title, 0, textYOffset, true, currentPageBookmarked,
@@ -3470,4 +3475,22 @@ CrossPointPosition EpubReaderActivity::getCurrentPosition() const {
     localPos.hasParagraphIndex = true;
   }
   return localPos;
+}
+
+void EpubReaderActivity::saveProgressPercent() {
+  const ChapterPosition position = chapterPosition();
+  const int bookProgress = bookPercentFor(position);
+  RECENT_BOOKS.updateProgress(bookPath, bookProgress);
+}
+
+void EpubReaderActivity::onExit() {
+  if (!epub) return;
+  saveProgressPercent();
+  ReaderActivity::onExit();
+}
+
+void EpubReaderActivity::prepareForSleep() {
+  if (!epub) return;
+  saveProgressPercent();
+  ReaderActivity::prepareForSleep();
 }

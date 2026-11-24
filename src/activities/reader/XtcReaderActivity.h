@@ -16,6 +16,8 @@ class XtcReaderActivity final : public ReaderActivity {
     int currentPage;
     int pageCount;
     std::string title;
+    int bookPage;
+    int bookPageCount;
   };
 
   void renderPage();
@@ -32,6 +34,7 @@ class XtcReaderActivity final : public ReaderActivity {
   bool handleFormatInput() override;
   void renderBook() override;
   void applyInitialOrientation() override;
+  void pushMetrics() override;
 
  public:
   explicit XtcReaderActivity(GfxRenderer& renderer, MappedInputManager& mappedInput, std::string bookPath,
@@ -48,4 +51,8 @@ class XtcReaderActivity final : public ReaderActivity {
 
  private:
   bool showAuthoronThisPage = false;
+  void pushPageCycleStatsToMetrics(const bool flush);
+  void prepareForSleep();
+  void onExit();
+  void saveProgressPercent();
 };

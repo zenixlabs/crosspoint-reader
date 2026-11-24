@@ -259,6 +259,8 @@ class EpubReaderActivity final : public ReaderActivity {
   bool remoteShortcut(bool readerMenu) override;
   bool isAtEndOfBook() const override;
   void onReturnFromEndOfBook() override;
+  void onExit() override;
+  void prepareForSleep() override;
 
   bool skipLoopDelay() override;
 
@@ -267,4 +269,5 @@ class EpubReaderActivity final : public ReaderActivity {
 
  private:
   bool showAuthoronThisPage = false;
+  void saveProgressPercent();
 };

@@ -24,6 +24,9 @@ class RecentBooksActivity final : public UiListActivity {
   const char* headerTitle() const override { return tr(STR_MENU_RECENT_BOOKS); }
   void drawFooter() override;
 
+  // Show an OK/Cancel prompt to remove the given book from the Recent Books list.
+  void promptRemoveBook(const std::string& path, const std::string& title);
+
   std::vector<RecentBook> recentBooks;
   // Row buffer, built in loadRecentBooks() (not buildScreen(), which reuses
   // it on every repaint instead of rebuilding a ListItem vector per render).
@@ -32,7 +35,4 @@ class RecentBooksActivity final : public UiListActivity {
 
   // Data loading
   void loadRecentBooks();
-
-  // Show an OK/Cancel prompt to remove the given book from the Recent Books list.
-  void promptRemoveBook(const std::string& path, const std::string& title);
 };

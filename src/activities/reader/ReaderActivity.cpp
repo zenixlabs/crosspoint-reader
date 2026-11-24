@@ -281,6 +281,7 @@ void ReaderActivity::render(RenderLock&&) {
 
   renderBook();
   readerSession.onRenderComplete(millis(), trustedtime::trustedNow(), getProgressBasisPoints());
+  pushMetrics();
 }
 
 bool ReaderActivity::handleForcedRefresh() {

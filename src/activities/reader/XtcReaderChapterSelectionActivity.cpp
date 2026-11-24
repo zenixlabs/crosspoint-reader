@@ -10,6 +10,7 @@
 #include "MappedInputManager.h"
 #include "components/UITheme.h"
 #include "fontIds.h"
+#include "util/StringUtils.h"
 
 namespace fui = freeink::ui;
 
@@ -110,12 +111,12 @@ void XtcReaderChapterSelectionActivity::buildScreen(UiScreen& screen) {
       static_cast<int16_t>(renderer.getScreenHeight() - (safe.y + safe.height)), static_cast<int16_t>(safe.x)});
 
   // Progress summary where the old sub-header band sat.
-  std::string progressLine;
+  std::string progressLine = "";
   const int bookPageCount = static_cast<int>(xtc->getPageCount());
   const int bookPage = static_cast<int>(currentPage) + 1;
-  const float bookPercent = bookPageCount > 0 ? (bookPage * 100.0f) / bookPageCount : 0.0f;
-  char percentStr[8];
-  snprintf(percentStr, sizeof(percentStr), "%.0f", bookPercent);
+  // const uint16_t bookPercent = bookPageCount > 0 ? static_cast<uint8_t>((bookPage) * 100 / bookPageCount : 0;
+  // char percentStr[8];
+  // snprintf(percentStr, sizeof(percentStr), "%i", bookPercent);
 
   int chapterPage = bookPage, chapterTotal = bookPageCount;  // fallback: no chapters
   if (xtc->hasChapters()) {
@@ -129,10 +130,20 @@ void XtcReaderChapterSelectionActivity::buildScreen(UiScreen& screen) {
     }
   }
   if (chapterTotal > 0) {
-    progressLine = std::string(tr(STR_CHAPTER_PREFIX)) + std::to_string(chapterPage) + "/" +
-                   std::to_string(chapterTotal) + std::string(tr(STR_PAGES_SEPARATOR));
+    // progressLine = std::string(tr(STR_CHAPTER_PREFIX)) + std::string(tr(STR_PAGE)) + std::to_string(chapterPage) +
+    // "/" + std::to_string(chapterTotal);
+
+    const int32_t chapterTimeLeft = xtc->getTimeRemaining(chapterTotal - chapterPage + 1, false);
+    std::string chapterTimeLeftStr =
+        StringUtils::formatDuration(static_cast<uint32_t>(chapterTimeLeft)) + std::string(tr(STR_LEFT));
+    progressLine += std::string(tr(STR_CHAPTER_PREFIX)) + chapterTimeLeftStr + std::string(tr(STR_SEPARATOR));
   }
-  progressLine += std::string(tr(STR_BOOK_PREFIX)) + percentStr + "%";
+
+  const int32_t bookTimeLeft = xtc->getTimeRemaining(bookPageCount - bookPage + 1, true);
+  std::string bookTimeLeftStr =
+      StringUtils::formatDuration(static_cast<uint32_t>(bookTimeLeft)) + std::string(tr(STR_LEFT));
+  progressLine += std::string(tr(STR_BOOK_PREFIX)) + bookTimeLeftStr;
+
   const fui::Rect band = screen.takeTop(static_cast<int16_t>(metrics.tabBarHeight));
   const int16_t pad = screen.theme().headerSidePadding;
   screen.target().text(band.inset(fui::Insets{0, pad, 0, pad}), progressLine.c_str(), screen.theme().smallText);

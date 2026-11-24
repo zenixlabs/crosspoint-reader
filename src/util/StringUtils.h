@@ -39,5 +39,9 @@ std::string sanitizeFilename(const std::string& name, size_t maxBytes = 100);
  * the byte limit. The stem is shortened on a UTF-8 codepoint boundary.
  */
 std::string sanitizeFilenamePreservingExtension(const std::string& name, size_t maxBytes = 100);
+std::string formatDuration(uint32_t seconds);
+
+// Parse "Chapter 2: Hello World" as "Hello World"
+std::string sanitizeChapterName(const std::string& name);
 
 }  // namespace StringUtils

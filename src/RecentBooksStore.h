@@ -10,6 +10,7 @@ struct RecentBook {
   std::string title;
   std::string author;
   std::string coverBmpPath;
+  int progress = -1;  // 0..100; -1 = not computed yet
 
   bool operator==(const RecentBook& other) const { return path == other.path; }
 };
@@ -37,6 +38,9 @@ class RecentBooksStore : public PersistableStore<RecentBooksStore> {
 
   void updateBook(const std::string& path, const std::string& title, const std::string& author,
                   const std::string& coverBmpPath);
+
+  // Set the saved reading percentage (clamped to 0..100). Persists only when the value changed.
+  void updateProgress(const std::string& path, int percent);
 
   // Remove the entry whose path matches (used when a book is removed from recents or finished/read).
   // Returns true if an entry was found and removed (no-op + false otherwise).

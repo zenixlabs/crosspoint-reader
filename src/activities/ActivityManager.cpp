@@ -118,7 +118,12 @@ void ActivityManager::loop() {
   }
 
   if (currentActivity) {
-    if (!currentActivity->isHomeActivity() && mappedInput.wasHomeGesture()) {
+    // hold back anywhere to goHOme.
+    const bool backLongPressedOutsideReader = !currentActivity->isHomeActivity() &&
+                                              !currentActivity->isReaderActivity() &&
+                                              mappedInput.wasLongPressed(MappedInputManager::Button::Back, 500);
+
+    if (!currentActivity->isHomeActivity() && (mappedInput.wasHomeGesture() || backLongPressedOutsideReader)) {
       if (currentActivity->handleHomeGesture()) {
         return;
       }

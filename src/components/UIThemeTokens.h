@@ -22,6 +22,15 @@ inline freeink::ui::ThemeTokens uiThemeTokens(const freeink::ui::GfxRendererTarg
   tokens.listInset = static_cast<int16_t>(metrics.listInset);
   tokens.listSidePadding = static_cast<int16_t>(metrics.listSidePadding);
   tokens.listSelectionStyle = static_cast<fui::SelectionStyle>(metrics.listSelectionStyle);
+
+  const bool lyra3 = SETTINGS.uiTheme == CrossPointSettings::UI_THEME::LYRA_3_COVERS;
+  if (lyra3) {
+    tokens.listRow = fui::selectedOutlineListRowStyles(tokens.listRowRadius);
+    tokens.listRow.selected.borderWidth = 2;
+    tokens.listRow.focused = tokens.listRow.selected;
+    tokens.listRow.active = tokens.listRow.selected;
+  }
+
   tokens.listScrollWidth = static_cast<int16_t>(metrics.listScrollWidth);
   tokens.listScrollSide = static_cast<uint8_t>(metrics.listScrollSide);
   // No extra scroll-track inset: the bezel is already compensated once at the
