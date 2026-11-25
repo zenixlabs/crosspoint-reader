@@ -481,6 +481,7 @@ void HomeActivity::promptRemoveBook(const std::string& path, const std::string& 
     if (RECENT_BOOKS.removeByPath(path)) {
       freeCoverBuffer();
       coverRendered = false;
+      recentsLoaded = false;
       const int saved = selectorIndex;
       const auto& metrics = UITheme::getInstance().getMetrics();
       loadRecentBooks(coverGridUi ? CoverGridHomeUi::MAX_BOOKS : metrics.homeRecentBooksCount);
